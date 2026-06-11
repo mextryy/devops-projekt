@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: app
-          image: devops419845acr.azurecr.io/app:<TAG>
+          image: devops419845acr.azurecr.io/app:latest
           ports:
             - containerPort: 8080
 ---
