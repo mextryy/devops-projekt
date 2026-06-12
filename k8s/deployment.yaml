@@ -17,6 +17,8 @@ spec:
           image: devops419845acr.azurecr.io/app:latest
           ports:
             - containerPort: 8080
+      imagePullSecrets:        # <-- DODAJEMY TE DWIE LINIJKI
+        - name: acr-secret
 ---
 apiVersion: v1
 kind: Service
@@ -29,3 +31,4 @@ spec:
   ports:
     - port: 80
       targetPort: 8080
+      
