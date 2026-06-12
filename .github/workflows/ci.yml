@@ -1,28 +1,42 @@
-name: CI — Build, Test, Push
+name: CI — Build, Test, Push, Deploy
 
 on:
   push:
     branches: [main]
 
 jobs:
-  build-test-push:
+  ci-cd:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Uruchom testy
+      - name: Uruchom testy (Składnia)
         run: |
-          python3 -m compileall app.py
+          python3 -m compileall app/app.py
+
+      - name: Zaloguj się do Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Zaloguj się do ACR
-        uses: azure/docker-login@v1
-        with:
-          login-server: ${{ secrets.ACR_LOGIN_SERVER }}
-          username: ${{ secrets.AZURE_CLIENT_ID }}
-          password: ${{ secrets.AZURE_CLIENT_SECRET }}
+        run: az acr login --name ${{ secrets.ACR_NAME }}
 
       - name: Zbuduj i wypchnij obraz
         run: |
           IMAGE=${{ secrets.ACR_LOGIN_SERVER }}/app:${{ github.sha }}
-          docker build -t $IMAGE .
+          docker build -t $IMAGE -f Dockerfile .
           docker push $IMAGE
+
+      - name: Pobierz kubeconfig AKS
+        run: |
+          az aks get-credentials \
+            --resource-group ${{ secrets.RESOURCE_GROUP }} \
+            --name ${{ secrets.AKS_NAME }} \
+            --overwrite-existing
+
+      - name: Zaktualizuj obraz w AKS
+        run: |
+          kubectl set image deployment/app \
+            app=${{ secrets.ACR_LOGIN_SERVER }}/app:${{ github.sha }}
+          kubectl rollout status deployment/app --timeout=120s
