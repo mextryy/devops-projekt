@@ -14,13 +14,12 @@ jobs:
         run: |
           python3 -m compileall app/app.py
 
-      - name: Zaloguj się do Azure
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
       - name: Zaloguj się do ACR
-        run: az acr login --name ${{ secrets.ACR_NAME }}
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ secrets.ACR_LOGIN_SERVER }}
+          username: ${{ secrets.ACR_NAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
 
       - name: Zbuduj i wypchnij obraz
         run: |
@@ -28,12 +27,10 @@ jobs:
           docker build -t $IMAGE -f Dockerfile .
           docker push $IMAGE
 
-      - name: Pobierz kubeconfig AKS
+      - name: Konfiguracja dostępu do AKS
         run: |
-          az aks get-credentials \
-            --resource-group ${{ secrets.RESOURCE_GROUP }} \
-            --name ${{ secrets.AKS_NAME }} \
-            --overwrite-existing
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG_DATA }}" | base64 --decode > ~/.kube/config
 
       - name: Zaktualizuj obraz w AKS
         run: |
