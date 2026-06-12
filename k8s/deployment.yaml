@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: app
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: app
@@ -14,10 +14,10 @@ spec:
     spec:
       containers:
         - name: app
-          image: devops419845acr.azurecr.io/app:latest
+          image: placeholder   # <-- To zostanie dynamicznie podmienione przez pipeline
           ports:
             - containerPort: 8080
-      imagePullSecrets:        # <-- DODAJEMY TE DWIE LINIJKI
+      imagePullSecrets:
         - name: acr-secret
 ---
 apiVersion: v1
@@ -31,4 +31,3 @@ spec:
   ports:
     - port: 80
       targetPort: 8080
-      
